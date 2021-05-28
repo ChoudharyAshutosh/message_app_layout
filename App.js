@@ -1,17 +1,22 @@
 import { StatusBar } from 'expo-status-bar';
 import React,{useState,useEffect} from 'react';
-import {StyleSheet, View, Alert, Image, TouchableOpacity, BackHandler, Platform, ActivityIndicator} from 'react-native';
+import {StyleSheet, View, Alert, Image, TouchableOpacity, BackHandler, Platform, ActivityIndicator, LayoutAnimation} from 'react-native';
 import Constants from 'expo-constants'
 import * as Location from 'expo-location'
 import Status from './components/Status'
 import MessageList from './components/MessageList'
 import ToolBar from './components/ToolBar'
+import ImageGrid from './components/ImageGrid'
 import {createImageMessage, createLocationMessage, createTextMessage, mapLoading} from './utils/MessageUtils'
+import KeyboardState from './components/KeyboardState'
+import MeasureLayout from './components/MeasureLayout'
+import MessagingContainer, { INPUT_METHOD } from './components/MessagingContainer'
 export default function App() {
   const [fullScreenImageId,setfullScreenImageId]=useState(null)
   const [errorMsg, setErrorMsg]=useState(null)
   const [toolBarIsDisabled, setToolBarDisablitity]=useState(false)
-  useEffect(()=>{
+  const [inputMethod, setInputMethod]=useState(INPUT_METHOD.NONE)
+  useEffect(()=>{ 
     (async()=>{
       if(Platform.OS==='android' && !Constants.isDevice){
         setErrorMsg(
@@ -45,6 +50,7 @@ export default function App() {
       })
     ]}
   )
+  const [keyboardVissible, setKeyboardVisibility]=useState(false)
   const [isInputFocused,  setIsInputFocused]=useState(false)
   const handleChangeFocus=(isFocused)=>{
     setIsInputFocused(isFocused)
@@ -53,7 +59,12 @@ export default function App() {
     let messages= [createTextMessage(text),...data.messages]
     setData({messages:messages})
   }
+  const handleChangeInputMethod=(inputMethod)=>{
+    setInputMethod(inputMethod)
+  }
   const handlePressToolBarCamera=()=>{
+    setIsInputFocused(false)
+    setInputMethod(INPUT_METHOD.CUSTOM)
 
   }
   const handlePressToolBarLocation=()=>{
@@ -95,6 +106,11 @@ export default function App() {
       default:break
     }
   }
+  const handlePressImage=(uri)=>{
+    const {messages}=data;
+    setData({messages:[createImageMessage(uri),...messages]})
+
+  }
   const renderMessageList=()=>{
     const {messages}=data
     return(
@@ -103,17 +119,25 @@ export default function App() {
       </View>
     )
   }
-  const renderLoading=()=>{
-    if(loading!==null)
-      return <View style={styles.loadingMap}>
-        <ActivityIndicator size={"large"} color="#00ff00"/>
-      </View>
-    else return
-  }
   const renderInputMethodEditor=()=>{
-    return(
-      <View style={styles.inputMethodEditor}></View>
+    console.log(inputMethod)
+    const animation=LayoutAnimation.create(
+        250,
+        Platform.OS==='android'?LayoutAnimation.Types.easeIn:LayoutAnimation.Types.keyboard,
+        LayoutAnimation.Properties.opacity
     )
+    LayoutAnimation.configureNext(animation)
+     const animation2=LayoutAnimation.create(
+        250,
+        Platform.OS==='android'?LayoutAnimation.Types.easeOut:LayoutAnimation.Types.keyboard,
+        LayoutAnimation.Properties.scaleX
+      )
+      LayoutAnimation.configureNext(animation2)
+    return(
+        <View style={styles.inputMethodEditor}>
+          <ImageGrid onPressImage={handlePressImage}/>
+        </View>
+      )
   }
   const renderToolBar=()=>{
     return(
@@ -144,9 +168,25 @@ export default function App() {
   return (
     <View style={styles.container}>
       <Status/>
-      {renderMessageList()}
-      {renderToolBar()}
-      {renderInputMethodEditor()}
+      {/*renderMessageList()*/}
+      {/*renderToolBar()*/}
+      {/*renderInputMethodEditor()*/}
+      <MeasureLayout>
+        {layout=>(
+          <KeyboardState layout={layout} setKeyboardVisibility={setKeyboardVisibility}>
+            {keyboardInfo=>(
+              <MessagingContainer 
+                {...keyboardInfo} 
+                inputMethod={inputMethod}
+                onChangeInputMethod={handleChangeInputMethod}
+                renderInputMethodEditor={renderInputMethodEditor}>
+                  {renderMessageList()}
+                  {renderToolBar()}
+                </MessagingContainer> 
+            )}
+          </KeyboardState>
+        )}
+      </MeasureLayout>
       {renderFullscreenImage()}
     </View>
   );

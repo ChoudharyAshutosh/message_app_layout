@@ -39,7 +39,6 @@ export default function Status(){
             subscription.remove()
         }
     },[])
- //   if(Platform.OS==='ios')
         return(
             <View style={[styles.status, {backgroundColor}]}>{messageContainer}</View>
         )

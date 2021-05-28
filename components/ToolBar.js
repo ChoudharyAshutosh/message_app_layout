@@ -25,7 +25,6 @@ export default function ToolBar({isFocused, onChangeFocus, onSubmit, onPressCame
     }
     const setInputRef=(ref)=>{
         ToolBar.input=ref
-        //setInput(ref)
     }
     useEffect(()=>{
         if(isFocused){

@@ -8,7 +8,7 @@ export default function MessageList ({messages, onPressMessage}){
     const renderMessageItem=({item})=>{
         return(
             <View key={item.id} style={styles.messageRow}>
-                <TouchableOpacity onPress={()=>onPressMessage(item)}>
+                <TouchableOpacity onPress={()=>onPressMessage(item)} activeOpacity={1}>
                     {renderMessageBody(item)}
                 </TouchableOpacity>
             </View>
